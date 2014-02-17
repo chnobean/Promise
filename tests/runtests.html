@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unit Tests for Promise</title>
+    <!-- jasmine -->
+    <link rel="stylesheet" type="text/css" href="jasmine/jasmine.css">
+    <script type="text/javascript" src="jasmine/jasmine.js"></script>
+    <script type="text/javascript" src="jasmine/jasmine-html.js"></script>
+
+    <!-- Promise library -->
+    <script type="text/javascript" src="../chnobean.Promise.js"></script>
+
+    <!-- tests -->
+    <script type="text/javascript" src="core.js"></script>
+
+
+</head>
+<body>
+<script type="text/javascript">
+(function() {
+    var jasmineEnv = jasmine.getEnv();
+    jasmineEnv.updateInterval = 250;
+
+    var htmlReporter = new jasmine.HtmlReporter();
+    jasmineEnv.addReporter(htmlReporter);
+
+    jasmineEnv.specFilter = function(spec) {
+        return htmlReporter.specFilter(spec);
+    };
+    jasmineEnv.execute();
+})();
+</script>
+</body>
+</html>
