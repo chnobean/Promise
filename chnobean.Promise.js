@@ -15,42 +15,42 @@
     }
 
     Promise.prototype.then = function Promise_then(onResolve, onReject) {
-        var promise,
-            result,
-            error;
+        var thisPromise = this,
+            promise = new Promise();
 
-        if (this._resolved !== undefined) {
+        function whenDone() {
+            var result,
+                error;
 
-            // it is resolved
             try {
-                if (this._resolved) {
+                if (thisPromise._resolved) {
                     // resolved
-                    result = this._result;
+                    result = thisPromise._result;
                     if (onResolve) {
                         result = onResolve(result);
                     }
-                    promise = Promise.resolve(result);
+                    promise._doResolve(result);
                 } else {
                     // rejected
-                    error = this._error;
+                    error = thisPromise._error;
                     if (onReject) {
                         result = onReject(error);
-                        promise = Promise.resolve(result);
+                        promise._doResolve(result);
                     } else {
-                        promise = Promise.reject(error);
+                        promise._doReject(error);
                     }
                 }
             } catch(e) {
-                promise = Promise.reject(e);
+                promise._doReject(e);
             }
+        }
 
+        if (this._resolved !== undefined) {
+            // it is resolved
+            whenDone();
         } else {
-
-            // not resolved, deffer 
-            promise = new Promise();
-
-            // TODO: deferred
-
+            thisPromise._deferred = thisPromise._deferred || [];
+            thisPromise._deferred.push(whenDone);
         }
 
         return promise;
@@ -78,8 +78,7 @@
         if (this._resolved === undefined) {
             this._resolved = true;
             this._result = result;
-
-            // TODO: deferred
+            this._doDeferred();
         }
     };
 
@@ -87,10 +86,21 @@
         if (this._resolved === undefined) {
             this._resolved = false;
             this._error = error;
-
-            // TODO: deferred
+            this._doDeferred();
         }
     };
+
+    Promise.prototype._doDeferred = function Promise_doDeferred() {
+        if (this._resolved !== undefined) {
+            var deferred = this._deferred;
+            if (deferred) {
+                this._deferred = undefined;
+                for(var i = 0; i < deferred.length; i++) {
+                    deferred[i]();
+                }
+            }
+        }
+    }
 
     // exports
     chnobean.Promise = Promise;
