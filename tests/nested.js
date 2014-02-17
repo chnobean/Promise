@@ -78,7 +78,7 @@
 
             });
 
-          it("(resolve Promise).then(return resolve Promise to another Resolveing promise).then.catch.then", function () {
+            it("(resolve Promise).then(return resolve Promise to another Resolveing promise).then.catch.then", function () {
                 var result1,
                     result2,
                     error1,
@@ -128,6 +128,42 @@
 
             });
 
+            it("Promise.resolve(return resolve Promise).then.catch.then", function () {
+                var result1,
+                    error1,
+                    done;
+
+                runs(function () {
+                    Promise.resolve(
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                resolve('r1');
+                            });
+                        })
+                    )
+                    .then(function (r) {
+                        result1 = r;
+                    })
+                    .catch(function (e) {
+                        error1 = e;
+                    })
+                    .then(function() {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBe('r1');
+                    expect(error1).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
         };
 
         describe('Synchronius', function () {
@@ -138,7 +174,7 @@
 
         describe('Asynchronius', function () {
             createTests(function (f) {
-                setInterval(f, 10);
+                setTimeout(f, 10);
             });
         });
 

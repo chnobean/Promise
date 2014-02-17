@@ -30,7 +30,11 @@
     // export
     (global.chnobean = global.chnobean || {}).Promise = Promise;
 
-    // new Promise(function(resolve, reject){ })
+
+    /**
+    * @constructor
+    * @param {function(function, function)} resolver
+    */
     function Promise(resolver) {
         if (resolver) {
             try {
@@ -41,42 +45,66 @@
         }
     }
 
+    /**
+    * @param {function=} onResolve is executed when this promise is fulfilled
+    * @param {function=} onReject is executed when this promise is rejected
+    */
     Promise.prototype.then = function Promise_then(onResolve, onReject) {
         var promise = new Promise();
 
         promise._onResolve = onResolve;
         promise._onReject = onReject; 
 
-        if (this._resolved !== undefined) {
-            this._doNext(promise);
-        } else {
-            this._deferred = this._deferred || [];
-            this._deferred.push(promise);
-        }
+        this._when(promise);
 
         return promise;
     };
 
-    Promise.prototype.catch = function Promise_catch(onError) {
-        return this.then(undefined, onError);
+    /**
+    * @param {function} onReject
+    *
+    * Sugar for promise.then(undefined, onReject)
+    */
+    Promise.prototype.catch = function Promise_catch(onReject) {
+        return this.then(undefined, onReject);
     };
 
+    /**
+    * @param {*=} result
+    *
+    * Creates a promise resolved for result.
+    */
     Promise.resolve = function Promise_resolve(result) {
         var promise = new Promise();
-        promise._doResolve(result);
+        promise._resolved = true;
+        promise._result = result;
         return promise;
     };
 
+    /**
+    * @param {*=} error
+    *
+    * Creates a promise rejected with error.
+    */
     Promise.reject = function Promise_reject(error) {
         var promise = new Promise();
-        promise._doReject(error);
+        promise._resolved = false;
+        promise._error = error;
         return promise;
     };
+
+    // --------------------------------------------------------------------------------
+    // -- private implementation
+    // --------------------------------------------------------------------------------
+
+    /**
+    * Used instead of "instanceof" for performance reasons.
+    */
+    Promise.prototype._isPromise = true;
 
     Promise.prototype._doResolve = function Promise_doResolve(result) {
         if (this._resolved === undefined) {
             this._resolved = true;
-            // TODO: handle result being a Promise (or thenable?)
             this._result = result;
             this._doDeferred();
         }
@@ -103,10 +131,25 @@
 
     Promise.prototype._doNext = function Promise_doNext(promise) {
         // assert(this._resolved !== undefined)
+        var result = this._result;
         if (this._resolved) {
-            promise._tryResolve(this._result);
+            if (result && result._isPromise) {
+                // resolved to a promise, forward this to that promise
+                result._when(promise);
+            } else {
+                promise._tryResolve(result);
+            }
         } else {
             promise._tryReject(this._error);
+        }
+    };
+
+    Promise.prototype._when = function Promise_when(promise) {
+        if (this._resolved !== undefined) {
+            this._doNext(promise);
+        } else {
+            this._deferred = this._deferred || [];
+            this._deferred.push(promise);
         }
     };
 

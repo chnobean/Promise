@@ -347,7 +347,7 @@
 
         describe('Asynchronius', function () {
             createTests(function (f) {
-                setInterval(f, 10);
+                setTimeout(f, 10);
             });
         });
 
