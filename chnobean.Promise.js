@@ -28,7 +28,13 @@
     "use strict";
 
     // export
-    (global.chnobean = global.chnobean || {}).Promise = Promise;
+    if (global.module) {
+        // Node.js
+        global.module.exports = Promise;
+    } else {
+        // <script />
+        (global.chnobean = global.chnobean || {}).Promise = Promise;
+    }
 
 
     /**
