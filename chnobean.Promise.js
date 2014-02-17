@@ -42,8 +42,8 @@
     // imports
     var Promise = chnobean.Promise;
 
-    Promise.prototype.catch = function Promise_catch(func) {
-        this.then(undefined, func);
+    Promise.prototype.catch = function Promise_catch(onError) {
+        this.then(undefined, onError);
     };
 
     Promise.resolve = function Promise_resolve(result) {
