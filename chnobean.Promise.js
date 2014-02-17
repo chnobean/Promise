@@ -36,7 +36,6 @@
         (global.chnobean = global.chnobean || {}).Promise = Promise;
     }
 
-
     /**
     * @constructor
     * @param {function(function, function)} resolver
@@ -57,12 +56,9 @@
     */
     Promise.prototype.then = function Promise_then(onResolve, onReject) {
         var promise = new Promise();
-
         promise._onResolve = onResolve;
         promise._onReject = onReject; 
-
         this._when(promise);
-
         return promise;
     };
 
@@ -206,6 +202,5 @@
             }
         }
     };
-
 
 })(this);
