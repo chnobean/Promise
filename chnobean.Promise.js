@@ -38,21 +38,20 @@
 
     Promise.resolve = function Promise_resolve(result) {
         var promise = new Promise();
-        promise._resolved = true;
-        promise._result = result;
+        promise._doResolve(result);
         return promise;
     };
 
     Promise.reject = function Promise_reject(error) {
         var promise = new Promise();
-        promise._resolved = false;
-        promise._error = error;
+        promise._doReject(error);
         return promise;
     };
 
     Promise.prototype._doResolve = function Promise_doResolve(result) {
         if (this._resolved === undefined) {
             this._resolved = true;
+            // TODO: handle result being a Promise (or thenable?)
             this._result = result;
             this._doDeferred();
         }
@@ -84,7 +83,6 @@
         } else {
             promise._tryReject(this._error);
         }
-
     };
 
     Promise.prototype._tryResolve = function Promise_tryResolve(result) {
@@ -94,7 +92,6 @@
         if (onResolve) {
             try {
                 var newResult = onResolve.call(this, result);
-                // TODO: handle result being a Promise
                 this._doResolve(newResult);
             } catch(e) {
                 this._doReject(e);
@@ -104,15 +101,14 @@
         }
     };
 
-    Promise.prototype._tryReject= function Promise_tryReject(error) {
+    Promise.prototype._tryReject = function Promise_tryReject(error) {
         var onReject = this._onReject;
         this._onResolve = undefined;
         this._onReject = undefined;
         if (onReject) {
             try {
-                var newResut = onReject.call(this, error);
-                // TODO: can catch return a promise to?
-                this._doResolve(newResut);
+                var newResult = onReject.call(this, error);
+                this._doResolve(newResult);
             } catch(e) {
                 this._doReject(e);
             }
