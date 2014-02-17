@@ -169,7 +169,46 @@
                 expect(error2).toBeUndefined();
             });
 
-        });                
+        });      
+
+        it("(synch reject Promise).then.then.catch(re-throw).then.catch", function () {
+            var result,
+                result2,
+                result3,
+                error,
+                error2;
+
+            runs(function () {
+                new Promise(function (resolve, reject) {
+                    reject('e');
+                })
+                .then(function (r) {
+                    result = true;
+                })
+                .then(function (r) {
+                    result2 = true;
+                })
+                .catch(function (e) {
+                    error = e;
+                    throw 'e2'
+                })
+                .then(function (r) {
+                    result3 = true;
+                })
+                .catch(function (e) {
+                    error2 = e;
+                });
+            });
+
+            runs(function () {
+                expect(result).toBeUndefined();
+                expect(result2).toBeUndefined();
+                expect(result3).toBeUndefined();
+                expect(error).toBe('e');
+                expect(error2).toBe('e2');
+            });
+
+        });                    
 
         it("(asynch resolve Promise).then.catch", function () {
             var result,
