@@ -144,7 +144,7 @@
     };
 
     /**
-    * If this one is resolved, settle given promise or deffer it's settlement.
+    * If this one is resolved, settle given promise or deffer it's settlement
     */
     Promise.prototype._when = function Promise_when(promise) {
         if (this._resolved !== undefined) {

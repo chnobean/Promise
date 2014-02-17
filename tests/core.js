@@ -38,7 +38,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             resolve('r');
                         });
                     })
@@ -52,7 +52,7 @@
                     );
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return result || error;
                 });
 
@@ -64,6 +64,45 @@
             });
 
 
+            it("(resolve Promise).then(twice)", function () {
+                var result1,
+                    result2,
+                    error,
+                    done;
+
+                runs(function () {
+                    var p = new Promise(function (resolve, reject) {
+                        execute(function () {
+                            resolve('r');
+                        });
+                    });
+                    p.then(function (r) {
+                        result1 = r;
+                    });
+                    p.then(function (r) {
+                        result2 = r;
+                    })
+                    .catch(function () {
+                        error = true;
+                    })
+                    .then(function () {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function () {
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBe('r');
+                    expect(result2).toBe('r');
+                    expect(error).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
             it("(resolve Promise).then.catch.then", function () {
                 var result,
                     error,
@@ -71,7 +110,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             resolve('r');
                         });
                     })
@@ -81,12 +120,12 @@
                     .catch(function (e) {
                         error = e;
                     })
-                    .then(function() {
+                    .then(function () {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });
 
@@ -106,7 +145,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             resolve('r');
                         });
                     })
@@ -120,12 +159,12 @@
                     .catch(function (e) {
                         error = e;
                     })
-                    .then(function(r){
+                    .then(function (r) {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });
 
@@ -144,7 +183,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             reject('e');
                         });
                     })
@@ -158,7 +197,7 @@
                     );
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return result || error;
                 });
 
@@ -169,6 +208,43 @@
 
             });
 
+            it("(reject Promise).catch(twice)", function () {
+                var result1,
+                    error1,
+                    error2,
+                    done;
+
+                runs(function () {
+                    var p = new Promise(function (resolve, reject) {
+                        execute(function () {
+                            reject('e');
+                        });
+                    });
+                    p.catch(function (e) {
+                        error1 = e;
+                    });
+                    p.catch(function (e) {
+                        error2 = e;
+                    })
+                    .then(function () {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function () {
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBeUndefined();
+                    expect(error1).toBe('e');
+                    expect(error2).toBe('e');
+                    expect(done).toBe(true);
+                });
+
+            });
+
+
             it("(reject Promise).then.catch.then", function () {
                 var result,
                     error,
@@ -176,7 +252,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             reject('e');
                         });
                     })
@@ -186,12 +262,12 @@
                     .catch(function (e) {
                         error = e;
                     })
-                    .then(function() {
+                    .then(function () {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });                
 
@@ -211,7 +287,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             reject('e');
                         });
                     })
@@ -224,12 +300,12 @@
                     .catch(function (e) {
                         error = e;
                     })
-                    .then(function() {
+                    .then(function () {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });   
 
@@ -252,7 +328,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             reject('e');
                         });
                     })
@@ -268,12 +344,12 @@
                     .catch(function (e) {
                         error2 = true;
                     })
-                    .then(function() {
+                    .then(function () {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });   
 
@@ -297,7 +373,7 @@
 
                 runs(function () {
                     new Promise(function (resolve, reject) {
-                        execute(function(){
+                        execute(function () {
                             reject('e');
                         });
                     })
@@ -317,12 +393,12 @@
                     .catch(function (e) {
                         error2 = e;
                     })
-                    .then(function() {
+                    .then(function () {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });  
 
@@ -351,7 +427,7 @@
             });
         });
 
-        describe('Promise .resolve() and .reject()', function() {
+        describe('Promise .resolve() and .reject()', function () {
 
            it("Promise.resolve().then.catch.then.catch.then", function () {
                 var result1,
@@ -369,18 +445,18 @@
                     .catch(function (e) {
                         error1 = e;
                     })
-                    .then(function(r){
+                    .then(function (r) {
                         result2 = r;
                     })
                     .catch(function (e) {
                         error2 = e;
                     })
-                    .then(function(r){
+                    .then(function (r) {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });
 
@@ -410,18 +486,18 @@
                     .catch(function (e) {
                         error1 = e;
                     })
-                    .then(function(r){
+                    .then(function (r) {
                         result2 = r;
                     })
                     .catch(function (e) {
                         error2 = e;
                     })
-                    .then(function(r){
+                    .then(function (r) {
                         done = true;
                     });
                 });
 
-                waitsFor(function(){
+                waitsFor(function () {
                     return done;
                 });
 
