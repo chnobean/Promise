@@ -2,8 +2,10 @@
 (function (global, undefined) {
     "use strict";
 
-    var chnobean = global.chnobean = global.chnobean || {};
+    // exports
+    (global.chnobean = global.chnobean || {}).Promise = Promise;
 
+    // new Promise(function(resolve, reject){ })
     function Promise(resolver) {
         if (resolver) {
             try {
@@ -15,42 +17,16 @@
     }
 
     Promise.prototype.then = function Promise_then(onResolve, onReject) {
-        var thisPromise = this,
-            promise = new Promise();
+        var promise = new Promise();
 
-        function whenDone() {
-            var result,
-                error;
-
-            try {
-                if (thisPromise._resolved) {
-                    // resolved
-                    result = thisPromise._result;
-                    if (onResolve) {
-                        result = onResolve(result);
-                    }
-                    promise._doResolve(result);
-                } else {
-                    // rejected
-                    error = thisPromise._error;
-                    if (onReject) {
-                        result = onReject(error);
-                        promise._doResolve(result);
-                    } else {
-                        promise._doReject(error);
-                    }
-                }
-            } catch(e) {
-                promise._doReject(e);
-            }
-        }
+        promise._onResolve = onResolve;
+        promise._onReject = onReject; 
 
         if (this._resolved !== undefined) {
-            // it is resolved
-            whenDone();
+            this._doNext(promise);
         } else {
-            thisPromise._deferred = thisPromise._deferred || [];
-            thisPromise._deferred.push(whenDone);
+            this._deferred = this._deferred || [];
+            this._deferred.push(promise);
         }
 
         return promise;
@@ -91,18 +67,58 @@
     };
 
     Promise.prototype._doDeferred = function Promise_doDeferred() {
-        if (this._resolved !== undefined) {
-            var deferred = this._deferred;
-            if (deferred) {
-                this._deferred = undefined;
-                for(var i = 0; i < deferred.length; i++) {
-                    deferred[i]();
-                }
+        // assert(this._resolved !== undefined)
+        var deferred = this._deferred;
+        if (deferred) {
+            this._deferred = undefined;
+            for(var i = 0; i < deferred.length; i++) {
+                this._doNext(deferred[i]);
             }
         }
-    }
+    };
 
-    // exports
-    chnobean.Promise = Promise;
+    Promise.prototype._doNext = function Promise_doNext(promise) {
+        // assert(this._resolved !== undefined)
+        if (this._resolved) {
+            promise._tryResolve(this._result);
+        } else {
+            promise._tryReject(this._error);
+        }
+
+    };
+
+    Promise.prototype._tryResolve = function Promise_tryResolve(result) {
+        var onResolve = this._onResolve;
+        this._onResolve = undefined;
+        this._onReject = undefined;
+        if (onResolve) {
+            try {
+                var newResult = onResolve.call(this, result);
+                // TODO: handle result being a Promise
+                this._doResolve(newResult);
+            } catch(e) {
+                this._doReject(e);
+            }
+        } else {
+            this._doResolve(result);
+        }
+    };
+
+    Promise.prototype._tryReject= function Promise_tryReject(error) {
+        var onReject = this._onReject;
+        this._onResolve = undefined;
+        this._onReject = undefined;
+        if (onReject) {
+            try {
+                var newResut = onReject.call(this, error);
+                // TODO: can catch return a promise to?
+                this._doResolve(newResut);
+            } catch(e) {
+                this._doReject(e);
+            }
+        } else {
+            this._doReject(error);
+        }
+    };
 
 })(this);
