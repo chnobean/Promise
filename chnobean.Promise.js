@@ -108,6 +108,9 @@
     */
     Promise.prototype._isPromise = true;
 
+    /**
+    * Resolve this promise and process defferals
+    */
     Promise.prototype._doResolve = function Promise_doResolve(result) {
         if (this._resolved === undefined) {
             this._resolved = true;
@@ -116,6 +119,9 @@
         }
     };
 
+    /**
+    * Reject this promise and process defferals
+    */
     Promise.prototype._doReject = function Promise_doReject(error) {
         if (this._resolved === undefined) {
             this._resolved = false;
@@ -124,6 +130,9 @@
         }
     };
 
+    /**
+    * Settle deffered "when"s
+    */
     Promise.prototype._doDeferred = function Promise_doDeferred() {
         // assert(this._resolved !== undefined)
         var deferred = this._deferred;
@@ -135,6 +144,9 @@
         }
     };
 
+    /**
+    * If this one is resolved, settle given promice or deffer its settlement.
+    */
     Promise.prototype._when = function Promise_when(promise) {
         if (this._resolved !== undefined) {
             promise._settle(this);
@@ -144,54 +156,56 @@
         }
     };
 
+    /**
+    * Settle this promise (called by the one before, when it's resolved)
+    */
     Promise.prototype._settle = function Promise_settle(settledBy) {
         // assert(settledBy._resolved !== undefined)
         var resolved = settledBy._resolved,
             result = settledBy._result,
-            error = settledBy._error;
+            error = settledBy._error,
+            onResolve,
+            onReject,
+            newResult;
 
-        if (resolved) {
-            if (result && result._isPromise) {
-                // resolved to a promise, forward this to that promise
-                result._when(this);
+        if (result && result._isPromise) {
+            // previous promise resolved to a promise, forward this to that promise
+            result._when(this);
+        } else {
+            // settle this promise by given result or error
+            // cache and kill the "on" funcitons (ones we got from .then(onResolve, onRejet))
+            onResolve = this._onResolve;
+            onReject = this._onReject;
+            this._onResolve = undefined;
+            this._onReject = undefined;
+            if (resolved) {
+                // resolve
+                if (onResolve) {
+                    try {
+                        newResult = onResolve.call(this, result);
+                        this._doResolve(newResult);
+                    } catch(e) {
+                        this._doReject(e);
+                    }
+                } else {
+                    this._doResolve(result);
+                }
             } else {
-                this._tryResolve(result);
+                // reject
+                if (onReject) {
+                    try {
+                        newResult = onReject.call(this, error);
+                        this._doResolve(newResult);
+                    } catch(e) {
+                        this._doReject(e);
+                    }
+                } else {
+                    this._doReject(error);
+                }
+
             }
-        } else {
-            this._tryReject(error);
         }
     };
 
-    Promise.prototype._tryResolve = function Promise_tryResolve(result) {
-        var onResolve = this._onResolve;
-        this._onResolve = undefined;
-        this._onReject = undefined;
-        if (onResolve) {
-            try {
-                var newResult = onResolve.call(this, result);
-                this._doResolve(newResult);
-            } catch(e) {
-                this._doReject(e);
-            }
-        } else {
-            this._doResolve(result);
-        }
-    };
-
-    Promise.prototype._tryReject = function Promise_tryReject(error) {
-        var onReject = this._onReject;
-        this._onResolve = undefined;
-        this._onReject = undefined;
-        if (onReject) {
-            try {
-                var newResult = onReject.call(this, error);
-                this._doResolve(newResult);
-            } catch(e) {
-                this._doReject(e);
-            }
-        } else {
-            this._doReject(error);
-        }
-    };
 
 })(this);
