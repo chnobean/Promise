@@ -28,6 +28,64 @@
 
         });
 
+        it("(synch resolve Promise).then.then.catch", function () {
+            var result,
+                result2,
+                error;
+
+            runs(function () {
+                new Promise(function (resolve, reject) {
+                    resolve('r');
+                })
+                .then(function (r) {
+                    result = r;
+                    return 'r2';
+                })
+                .then(function (r) {
+                    result2 = r;
+                })
+                .catch(function (e) {
+                    error = e;
+                });
+            });
+
+            runs(function () {
+                expect(result).toBe('r');
+                expect(result2).toBe('r2');
+                expect(error).toBeUndefined();
+            });
+
+        });
+
+        it("(synch resolve Promise).then.catch.then", function () {
+            var result,
+                result2,
+                error;
+
+            runs(function () {
+                new Promise(function (resolve, reject) {
+                    resolve('r');
+                })
+                .then(function (r) {
+                    result = r;
+                    return 'r2';
+                })
+                .catch(function (e) {
+                    error = e;
+                })
+                .then(function(r) {
+                    result2 = r;
+                });
+            });
+
+            runs(function () {
+                expect(result).toBe('r');
+                expect(result2).toBe('r2');
+                expect(error).toBeUndefined();
+            });
+
+        });        
+
         it("(synch reject Promise).then.catch", function () {
             var result,
                 error;
@@ -50,6 +108,68 @@
             });
 
         });
+
+        it("(synch reject Promise).then.then.catch", function () {
+            var result,
+                result2,
+                error;
+
+            runs(function () {
+                new Promise(function (resolve, reject) {
+                    reject('e');
+                })
+                .then(function (r) {
+                    result = true;
+                })
+                .then(function (r) {
+                    result2 = true;
+                })
+                .catch(function (e) {
+                    error = e;
+                });
+            });
+
+            runs(function () {
+                expect(result).toBeUndefined();
+                expect(result2).toBeUndefined();
+                expect(error).toBe('e');
+            });
+
+        }); 
+
+
+        it("(synch reject Promise).then.then.catch.catch", function () {
+            var result,
+                result2,
+                error,
+                error2;
+
+            runs(function () {
+                new Promise(function (resolve, reject) {
+                    reject('e');
+                })
+                .then(function (r) {
+                    result = true;
+                })
+                .then(function (r) {
+                    result2 = true;
+                })
+                .catch(function (e) {
+                    error = e;
+                })
+                .catch(function (e) {
+                    error2 = true;
+                });
+            });
+
+            runs(function () {
+                expect(result).toBeUndefined();
+                expect(result2).toBeUndefined();
+                expect(error).toBe('e');
+                expect(error2).toBeUndefined();
+            });
+
+        });                
 
         it("(asynch resolve Promise).then.catch", function () {
             var result,
