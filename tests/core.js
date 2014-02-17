@@ -326,6 +326,92 @@
             });
         });
 
+        describe('Promise .resolve() and .reject()', function() {
+
+           it("Promise.resolve().then.catch.then.catch.then", function () {
+                var result1,
+                    result2,
+                    error1,
+                    error2,
+                    done;
+
+                runs(function () {
+                    Promise.resolve('r1')
+                    .then(function (r) {
+                        result1 = r;
+                        return 'r2';
+                    })
+                    .catch(function (e) {
+                        error1 = e;
+                    })
+                    .then(function(r){
+                        result2 = r;
+                    })
+                    .catch(function (e) {
+                        error2 = e;
+                    })
+                    .then(function(r){
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBe('r1');
+                    expect(error1).toBeUndefined();
+                    expect(result2).toBe('r2');
+                    expect(error2).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
+           it("Promise.reject().then.catch.then.catch.then", function () {
+                var result1,
+                    result2,
+                    error1,
+                    error2,
+                    done;
+
+                runs(function () {
+                    Promise.reject('e1')
+                    .then(function (r) {
+                        result1 = r;
+                        return 'r2';
+                    })
+                    .catch(function (e) {
+                        error1 = e;
+                    })
+                    .then(function(r){
+                        result2 = r;
+                    })
+                    .catch(function (e) {
+                        error2 = e;
+                    })
+                    .then(function(r){
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBeUndefined();
+                    expect(error1).toBe('e1');
+                    expect(result2).toBeUndefined();
+                    expect(error2).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
+        });
+
     });
 
 })(this);
