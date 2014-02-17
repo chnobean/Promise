@@ -105,31 +105,45 @@
     Promise.prototype._isPromise = true;
 
     /**
-    * Resolve this promise and process defferals
+    * Resolve this promise and process deferals
     */
     Promise.prototype._doResolve = function Promise_doResolve(result) {
         if (this._resolved === undefined) {
             this._resolved = true;
             this._result = result;
-            this._doDeferred();
+            this._settleDefered();
         }
     };
 
     /**
-    * Reject this promise and process defferals
+    * Reject this promise and process deferals
     */
     Promise.prototype._doReject = function Promise_doReject(error) {
         if (this._resolved === undefined) {
             this._resolved = false;
             this._error = error;
-            this._doDeferred();
+            this._settleDefered();
         }
     };
 
     /**
-    * Settle deffered "when"s
+    * If this one is resolved, settle given promise or defer it's settlement
     */
-    Promise.prototype._doDeferred = function Promise_doDeferred() {
+    Promise.prototype._when = function Promise_when(promise) {
+        if (this._resolved !== undefined) {
+            // we are resolved, settle the given promise
+            promise._settle(this);
+        } else {
+            // defer the settlement
+            this._deferred = this._deferred || [];
+            this._deferred.push(promise);
+        }
+    };
+
+    /**
+    * Settle promised whos settlement was defered
+    */
+    Promise.prototype._settleDefered = function Promise_settleDefered() {
         // assert(this._resolved !== undefined)
         var deferred = this._deferred,
             deferredLength,
@@ -141,19 +155,7 @@
                 deferred[i]._settle(this);
             }
         }
-    };
-
-    /**
-    * If this one is resolved, settle given promise or deffer it's settlement
-    */
-    Promise.prototype._when = function Promise_when(promise) {
-        if (this._resolved !== undefined) {
-            promise._settle(this);
-        } else {
-            this._deferred = this._deferred || [];
-            this._deferred.push(promise);
-        }
-    };
+    };   
 
     /**
     * Settle this promise (called by the one before, when it's resolved)
