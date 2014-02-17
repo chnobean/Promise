@@ -130,32 +130,35 @@
         if (deferred) {
             this._deferred = undefined;
             for(var i = 0; i < deferred.length; i++) {
-                this._doNext(deferred[i]);
+                deferred[i]._settle(this);
             }
-        }
-    };
-
-    Promise.prototype._doNext = function Promise_doNext(promise) {
-        // assert(this._resolved !== undefined)
-        var result = this._result;
-        if (this._resolved) {
-            if (result && result._isPromise) {
-                // resolved to a promise, forward this to that promise
-                result._when(promise);
-            } else {
-                promise._tryResolve(result);
-            }
-        } else {
-            promise._tryReject(this._error);
         }
     };
 
     Promise.prototype._when = function Promise_when(promise) {
         if (this._resolved !== undefined) {
-            this._doNext(promise);
+            promise._settle(this);
         } else {
             this._deferred = this._deferred || [];
             this._deferred.push(promise);
+        }
+    };
+
+    Promise.prototype._settle = function Promise_settle(settledBy) {
+        // assert(settledBy._resolved !== undefined)
+        var resolved = settledBy._resolved,
+            result = settledBy._result,
+            error = settledBy._error;
+
+        if (resolved) {
+            if (result && result._isPromise) {
+                // resolved to a promise, forward this to that promise
+                result._when(this);
+            } else {
+                this._tryResolve(result);
+            }
+        } else {
+            this._tryReject(error);
         }
     };
 
