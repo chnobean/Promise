@@ -131,10 +131,13 @@
     */
     Promise.prototype._doDeferred = function Promise_doDeferred() {
         // assert(this._resolved !== undefined)
-        var deferred = this._deferred;
+        var deferred = this._deferred,
+            deferredLength,
+            i;
         if (deferred) {
             this._deferred = undefined;
-            for(var i = 0; i < deferred.length; i++) {
+            deferredLength = deferred.length;
+            for(i = 0; i < deferredLength; i++) {
                 deferred[i]._settle(this);
             }
         }
