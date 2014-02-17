@@ -171,8 +171,8 @@
             // previous promise resolved to a promise, forward this to that promise
             result._when(this);
         } else {
-            // settle this promise by given result or error
-            // cache and kill the "on" funcitons (ones we got from .then(onResolve, onRejet))
+            // settle this promise given result or error
+            // cache and kill the onResolve and onReject we got from .then(onResolve, onReject)
             onResolve = this._onResolve;
             onReject = this._onReject;
             this._onResolve = undefined;
