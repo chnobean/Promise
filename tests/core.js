@@ -66,7 +66,9 @@
 
             it("(resolve Promise).then(twice)", function () {
                 var result1,
+                    result1Count = 0,
                     result2,
+                    result2Count = 0,
                     error,
                     done;
 
@@ -75,12 +77,20 @@
                         execute(function () {
                             resolve('r');
                         });
+                        execute(function () {
+                            resolve('r2');
+                        });
+                        execute(function () {
+                            resolve('r3');
+                        });
                     });
                     p.then(function (r) {
                         result1 = r;
+                        result1Count++;
                     });
                     p.then(function (r) {
                         result2 = r;
+                        result2Count++;
                     })
                     .catch(function () {
                         error = true;
@@ -96,7 +106,9 @@
 
                 runs(function () {
                     expect(result1).toBe('r');
+                    expect(result1Count).toBe(1);
                     expect(result2).toBe('r');
+                    expect(result2Count).toBe(1);
                     expect(error).toBeUndefined();
                     expect(done).toBe(true);
                 });
@@ -211,7 +223,9 @@
             it("(reject Promise).catch(twice)", function () {
                 var result1,
                     error1,
+                    error1Count = 0,
                     error2,
+                    error2Count = 0,
                     done;
 
                 runs(function () {
@@ -219,12 +233,17 @@
                         execute(function () {
                             reject('e');
                         });
+                        execute(function () {
+                            reject('e2');
+                        });
                     });
                     p.catch(function (e) {
                         error1 = e;
+                        error1Count++;
                     });
                     p.catch(function (e) {
                         error2 = e;
+                        error2Count++;
                     })
                     .then(function () {
                         done = true;
@@ -238,7 +257,9 @@
                 runs(function () {
                     expect(result1).toBeUndefined();
                     expect(error1).toBe('e');
-                    expect(error2).toBe('e');
+                    expect(error1Count).toBe(1);
+                    expect(error1).toBe('e');
+                    expect(error2Count).toBe(1);
                     expect(done).toBe(true);
                 });
 
