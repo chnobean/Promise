@@ -21,7 +21,7 @@
                         });
                     })
                     .then(function (r) {
-                        result = r;
+                        result1 = r;
                         return new Promise(function (resolve, reject) {
                             execute(function(){
                                 resolve('r2');
