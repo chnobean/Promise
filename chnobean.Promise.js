@@ -23,18 +23,20 @@
  * 
  */
 
-// core implementation
-(function (global, undefined) {
-    "use strict";
+
+(function (global, exporter) {
 
     // export
-    if (global.module) {
+    if (typeof module !== 'undefined') {
         // Node.js
-        global.module.exports = Promise;
+        module.exports = exporter();
     } else {
         // <script />
-        (global.chnobean = global.chnobean || {}).Promise = Promise;
+        (global.chnobean = global.chnobean || {}).Promise = exporter();
     }
+
+})(this, function (undefined) {
+    "use strict";
 
     /**
     * @constructor
@@ -211,4 +213,5 @@
         }
     };
 
-})(this);
+    return Promise;
+});
