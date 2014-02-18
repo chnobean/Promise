@@ -43,32 +43,35 @@
     function Promise(resolver) {
         if (resolver) {
             try {
-                resolver(this._doResolve.bind(this), this._doReject.bind(this));
+                resolver(
+                    Promise_fulfill.bind(undefined, this), 
+                    Promise_reject.bind(undefined, this)
+                );
             } catch(e) {
-                this._doReject(e);
+                Promise_reject(this, e);
             }
         }
     }
 
     /**
-    * @param {function=} onResolve is executed when this promise is fulfilled
-    * @param {function=} onReject is executed when this promise is rejected
+    * @param {function=} onFulfilled is executed when this promise is fulfilled
+    * @param {function=} onRejected is executed when this promise is rejected
     */
-    Promise.prototype.then = function Promise_then(onResolve, onReject) {
+    Promise.prototype.then = function Promise_then(onFulfilled, onRejected) {
         var promise = new Promise();
-        promise._onResolve = onResolve;
-        promise._onReject = onReject; 
-        this._when(promise);
+        promise._onFulfilled = onFulfilled;
+        promise._onRejected = onRejected; 
+        Promise_when(this, promise);
         return promise;
     };
 
     /**
-    * @param {function} onReject
+    * @param {function} onRejected
     *
-    * Sugar for promise.then(undefined, onReject)
+    * Sugar for promise.then(undefined, onRejected)
     */
-    Promise.prototype.catch = function Promise_catch(onReject) {
-        return this.then(undefined, onReject);
+    Promise.prototype.catch = function Promise_catch(onRejected) {
+        return this.then(undefined, onRejected);
     };
 
     /**
@@ -78,7 +81,7 @@
     */
     Promise.resolve = function Promise_resolve(result) {
         var promise = new Promise();
-        promise._resolved = true;
+        promise._fulfilled = true;
         promise._result = result;
         return promise;
     };
@@ -90,7 +93,7 @@
     */
     Promise.reject = function Promise_reject(error) {
         var promise = new Promise();
-        promise._resolved = false;
+        promise._fulfilled = false;
         promise._error = error;
         return promise;
     };
@@ -105,103 +108,103 @@
     Promise.prototype._isPromise = true;
 
     /**
-    * Resolve this promise and process deferals
+    * Fulfills the promise and resolve deferals
     */
-    Promise.prototype._doResolve = function Promise_doResolve(result) {
-        if (this._resolved === undefined) {
-            this._resolved = true;
-            this._result = result;
-            this._settleDefered();
+    function Promise_fulfill(promise, result) {
+        if (promise._fulfilled === undefined) {
+            promise._fulfilled = true;
+            promise._result = result;
+            Promise_resolveDeferred(promise);
         }
     };
 
     /**
-    * Reject this promise and process deferals
+    * Reject the promise and resolve deferals
     */
-    Promise.prototype._doReject = function Promise_doReject(error) {
-        if (this._resolved === undefined) {
-            this._resolved = false;
-            this._error = error;
-            this._settleDefered();
+    function Promise_reject(promise, error) {
+        if (promise._fulfilled === undefined) {
+            promise._fulfilled = false;
+            promise._error = error;
+            Promise_resolveDeferred(promise);
         }
     };
 
     /**
-    * If this one is resolved, settle given promise or defer it's settlement
+    * Once promise is resolved, resolve nextPromise
     */
-    Promise.prototype._when = function Promise_when(promise) {
-        if (this._resolved !== undefined) {
-            // we are resolved, settle the given promise
-            promise._settle(this);
+    function Promise_when(promise, nextPromise) {
+        if (promise._fulfilled !== undefined) {
+            // we are resolved, resolve the given promise
+            Promise_resolve(nextPromise, promise);
         } else {
-            // defer the settlement
-            this._deferred = this._deferred || [];
-            this._deferred.push(promise);
+            // defer the resolution
+            promise._deferred = promise._deferred || [];
+            promise._deferred.push(nextPromise);
         }
     };
 
     /**
-    * Settle promised whos settlement was defered
+    * Resolves deffered promises
     */
-    Promise.prototype._settleDefered = function Promise_settleDefered() {
-        // assert(this._resolved !== undefined)
-        var deferred = this._deferred,
+    function Promise_resolveDeferred(promise) {
+        // assert(promise._fulfilled !== undefined)
+        var deferred = promise._deferred,
             deferredLength,
             i;
         if (deferred) {
-            this._deferred = undefined;
+            promise._deferred = undefined;
             deferredLength = deferred.length;
             for(i = 0; i < deferredLength; i++) {
-                deferred[i]._settle(this);
+                Promise_resolve(deferred[i], promise);
             }
         }
     };   
 
     /**
-    * Settle this promise (called by the one before, when it's resolved)
+    * Resolves promise (called by the one before, when it's resolved)
     */
-    Promise.prototype._settle = function Promise_settle(settledBy) {
-        // assert(settledBy._resolved !== undefined)
-        var resolved = settledBy._resolved,
-            result = settledBy._result,
-            error = settledBy._error,
-            onResolve,
-            onReject,
+    function Promise_resolve(promise, resolvedBy) {
+        // assert(resolvedBy._fulfilled !== undefined)
+        var resolved = resolvedBy._fulfilled,
+            result = resolvedBy._result,
+            error = resolvedBy._error,
+            onFulfilled,
+            onRejected,
             newResult;
 
         if (result && result._isPromise) {
-            // previous promise resolved to a promise, forward this to that promise
-            result._when(this);
+            // previous promise resolved to a promise, forward the promose
+            Promise_when(result, promise);
         } else {
-            // settle this promise given result or error
-            // cache and kill the onResolve and onReject we got from .then(onResolve, onReject)
-            onResolve = this._onResolve;
-            onReject = this._onReject;
-            this._onResolve = undefined;
-            this._onReject = undefined;
+            // resolve promise given result or error
+            // cache and kill the onFulfilled and onRejected we got from .then(onFulfilled, onRejected)
+            onFulfilled = promise._onFulfilled;
+            onRejected = promise._onRejected;
+            promise._onFulfilled = undefined;
+            promise._onRejected = undefined;
             if (resolved) {
                 // resolve
-                if (onResolve) {
+                if (onFulfilled) {
                     try {
-                        newResult = onResolve.call(this, result);
-                        this._doResolve(newResult);
+                        newResult = onFulfilled.call(promise, result);
+                        Promise_fulfill(promise, newResult);
                     } catch(e) {
-                        this._doReject(e);
+                        Promise_reject(promise, e);
                     }
                 } else {
-                    this._doResolve(result);
+                    Promise_fulfill(promise, result);
                 }
             } else {
                 // reject
-                if (onReject) {
+                if (onRejected) {
                     try {
-                        newResult = onReject.call(this, error);
-                        this._doResolve(newResult);
+                        newResult = onRejected.call(promise, error);
+                        Promise_fulfill(promise, newResult);
                     } catch(e) {
-                        this._doReject(e);
+                        Promise_reject(promise, e);
                     }
                 } else {
-                    this._doReject(error);
+                    Promise_reject(promise, error);
                 }
 
             }
