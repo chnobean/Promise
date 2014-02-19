@@ -93,14 +93,14 @@
     };
 
     /**
-    * @param {*=} error
+    * @param {*=} result
     *
-    * Creates a promise rejected with error.
+    * Creates a promise rejected with result.
     */
-    Promise.reject = function Promise_reject(error) {
+    Promise.reject = function Promise_reject(result) {
         var promise = new Promise();
         promise._fulfilled = false;
-        promise._error = error;
+        promise._result = result;
         return promise;
     };
 
@@ -127,10 +127,10 @@
     /**
     * Reject the promise and resolve deferals
     */
-    function Promise_reject(promise, error) {
+    function Promise_reject(promise, result) {
         if (promise._fulfilled === undefined) {
             promise._fulfilled = false;
-            promise._error = error;
+            promise._result = result;
             Promise_resolveDeferred(promise);
         }
     };
@@ -171,53 +171,49 @@
     */
     function Promise_resolve(promise, resolvedBy) {
         // assert(resolvedBy._fulfilled !== undefined)
-        var resolved = resolvedBy._fulfilled,
+        var fulfilled = resolvedBy._fulfilled,
             result = resolvedBy._result,
-            error = resolvedBy._error,
-            handler,
-            handlerArg;
+            handler;
 
-        if (result && result._isPromise) {
+        if (fulfilled && result && result._isPromise) {
             // previous promise resolved to a promise, forward the promose
             Promise_when(result, promise);
         } else {
-            // resolve promise given result or error
+            // resolve promise
             // what handler will we use: onFulfilled or onRejected?
-            if (resolved) {
+            if (fulfilled) {
                 handler = promise._onFulfilled;
-                handlerArg = result;
             } else {
                 handler = promise._onRejected;
-                handlerArg = error;
             }
             // kill the onFulfilled and onRejected we got from .then(onFulfilled, onRejected)
             promise._onFulfilled = undefined;
             promise._onRejected = undefined;
             // if there is a handler, dispatch... otherwise just settle in-line
             if (handler) {
-                setTimeout(Promise_handleResolution.bind(promise, handler, handlerArg), 0);
+                setTimeout(Promise_handleResolution.bind(undefined, promise, handler, result), 0);
             } else {
-                if (resolved) {
+                if (fulfilled) {
                     Promise_fulfill(promise, result);
                 } else {
-                    Promise_reject(promise, error);
+                    Promise_reject(promise, result);
                 }
             }
         }
     }
 
     /**
-    * Call the handler: onFulfilled(result) or onRejected(error). And fulfill or reject based on outcome.
+    * Call the handler: onFulfilled(result) or onRejected(result). And fulfill or reject based on outcome.
     */
-    function Promise_handleResolution(handler, resultOrError) {
+    function Promise_handleResolution(promise, handler, result) {
         try {
-            var newResult = handler(resultOrError);
-            if (newResult === this) {
+            var newResult = handler(result);
+            if (newResult === promise) {
                 throw new TypeError();
             }
-            Promise_fulfill(this, newResult);
+            Promise_fulfill(promise, newResult);
         } catch(e) {
-            Promise_reject(this, e);
+            Promise_reject(promise, e);
         }
     }
 
