@@ -84,7 +84,7 @@
     *
     * Creates a promise resolved for result.
     */
-    Promise.resolve = function Promise_resolve(result) {
+    Promise.resolve = function Promise_createFulfilled(result) {
         var promise = Promise_create();
         promise._fulfilled = true;
         promise._result = result;
@@ -96,7 +96,7 @@
     *
     * Creates a promise rejected with result.
     */
-    Promise.reject = function Promise_reject(result) {
+    Promise.reject = function Promise_createRejected(result) {
         var promise = Promise_create();
         promise._fulfilled = false;
         promise._result = result;
