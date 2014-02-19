@@ -187,31 +187,33 @@
             if (resolved) {
                 // resolve
                 if (onFulfilled) {
-                    try {
-                        newResult = onFulfilled.call(promise, result);
-                        Promise_fulfill(promise, newResult);
-                    } catch(e) {
-                        Promise_reject(promise, e);
-                    }
+                    setTimeout(Promise_handleResolution.bind(promise, onFulfilled, result), 0);
                 } else {
                     Promise_fulfill(promise, result);
                 }
             } else {
                 // reject
                 if (onRejected) {
-                    try {
-                        newResult = onRejected.call(promise, error);
-                        Promise_fulfill(promise, newResult);
-                    } catch(e) {
-                        Promise_reject(promise, e);
-                    }
+                    setTimeout(Promise_handleResolution.bind(promise, onRejected, error), 0);
                 } else {
                     Promise_reject(promise, error);
                 }
 
             }
         }
-    };
+    }
+
+    /**
+    * Call the handler: onFulfilled(result) or onRejected(error). And fulfill or reject based on outcome.
+    */
+    function Promise_handleResolution(handler, resultOrError) {
+        try {
+            var newResult = handler(resultOrError);
+            Promise_fulfill(this, newResult);
+        } catch(e) {
+            Promise_reject(this, e);
+        }
+    }
 
     return Promise;
 });
