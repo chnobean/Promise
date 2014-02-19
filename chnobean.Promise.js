@@ -213,6 +213,9 @@
     function Promise_handleResolution(handler, resultOrError) {
         try {
             var newResult = handler(resultOrError);
+            if (newResult === this) {
+                throw new TypeError();
+            }
             Promise_fulfill(this, newResult);
         } catch(e) {
             Promise_reject(this, e);
