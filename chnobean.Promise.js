@@ -23,7 +23,6 @@
  * 
  */
 
-
 (function (global, exporter) {
 
     // export
@@ -60,7 +59,7 @@
     * @param {function=} onRejected is executed when this promise is rejected
     */
     Promise.prototype.then = function Promise_then(onFulfilled, onRejected) {
-        var promise = new Promise();
+        var promise = Promise_create();
         if (typeof onFulfilled === 'function') {
             promise._onFulfilled = onFulfilled;
         }
@@ -86,7 +85,7 @@
     * Creates a promise resolved for result.
     */
     Promise.resolve = function Promise_resolve(result) {
-        var promise = new Promise();
+        var promise = Promise_create();
         promise._fulfilled = true;
         promise._result = result;
         return promise;
@@ -98,7 +97,7 @@
     * Creates a promise rejected with result.
     */
     Promise.reject = function Promise_reject(result) {
-        var promise = new Promise();
+        var promise = Promise_create();
         promise._fulfilled = false;
         promise._result = result;
         return promise;
@@ -114,6 +113,13 @@
     Promise.prototype._isPromise = true;
 
     /**
+    * Creates a promise without running the contructor function.
+    */
+    function Promise_create() {
+        return Object.create(Promise.prototype);
+    }
+
+    /**
     * Fulfills the promise and resolve deferals
     */
     function Promise_fulfill(promise, result) {
@@ -122,7 +128,7 @@
             promise._result = result;
             Promise_resolveDeferred(promise);
         }
-    };
+    }
 
     /**
     * Reject the promise and resolve deferals
@@ -133,7 +139,7 @@
             promise._result = result;
             Promise_resolveDeferred(promise);
         }
-    };
+    }
 
     /**
     * Once promise is resolved, resolve nextPromise
@@ -147,7 +153,7 @@
             promise._deferred = promise._deferred || [];
             promise._deferred.push(nextPromise);
         }
-    };
+    }
 
     /**
     * Resolves deffered promises
@@ -164,7 +170,7 @@
                 Promise_resolve(deferred[i], promise);
             }
         }
-    };   
+    }  
 
     /**
     * Resolves promise (called by the one before, when it's resolved)
