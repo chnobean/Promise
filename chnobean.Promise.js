@@ -174,35 +174,34 @@
         var resolved = resolvedBy._fulfilled,
             result = resolvedBy._result,
             error = resolvedBy._error,
-            onFulfilled,
-            onRejected,
-            newResult;
+            handler,
+            handlerArg;
 
         if (result && result._isPromise) {
             // previous promise resolved to a promise, forward the promose
             Promise_when(result, promise);
         } else {
             // resolve promise given result or error
-            // cache and kill the onFulfilled and onRejected we got from .then(onFulfilled, onRejected)
-            onFulfilled = promise._onFulfilled;
-            onRejected = promise._onRejected;
+            // what handler will we use: onFulfilled or onRejected?
+            if (resolved) {
+                handler = promise._onFulfilled;
+                handlerArg = result;
+            } else {
+                handler = promise._onRejected;
+                handlerArg = error;
+            }
+            // kill the onFulfilled and onRejected we got from .then(onFulfilled, onRejected)
             promise._onFulfilled = undefined;
             promise._onRejected = undefined;
-            if (resolved) {
-                // resolve
-                if (onFulfilled) {
-                    setTimeout(Promise_handleResolution.bind(promise, onFulfilled, result), 0);
-                } else {
-                    Promise_fulfill(promise, result);
-                }
+            // if there is a handler, dispatch... otherwise just settle in-line
+            if (handler) {
+                setTimeout(Promise_handleResolution.bind(promise, handler, handlerArg), 0);
             } else {
-                // reject
-                if (onRejected) {
-                    setTimeout(Promise_handleResolution.bind(promise, onRejected, error), 0);
+                if (resolved) {
+                    Promise_fulfill(promise, result);
                 } else {
                     Promise_reject(promise, error);
                 }
-
             }
         }
     }
