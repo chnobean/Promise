@@ -61,8 +61,12 @@
     */
     Promise.prototype.then = function Promise_then(onFulfilled, onRejected) {
         var promise = new Promise();
-        promise._onFulfilled = onFulfilled;
-        promise._onRejected = onRejected; 
+        if (typeof onFulfilled === 'function') {
+            promise._onFulfilled = onFulfilled;
+        }
+        if (typeof onRejected === 'function') {
+            promise._onRejected = onRejected; 
+        }
         Promise_when(this, promise);
         return promise;
     };
