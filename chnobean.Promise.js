@@ -86,8 +86,7 @@
     */
     Promise.resolve = function Promise_createFulfilled(result) {
         var promise = Promise_create();
-        promise._fulfilled = true;
-        promise._result = result;
+        Promise_fulfill(promise, result);
         return promise;
     };
 
@@ -98,8 +97,7 @@
     */
     Promise.reject = function Promise_createRejected(result) {
         var promise = Promise_create();
-        promise._fulfilled = false;
-        promise._result = result;
+        Promise_reject(promise, result);
         return promise;
     };
 
