@@ -118,12 +118,33 @@
     }
 
     /**
-    * Fulfills the promise and resolve deferals
+    * Fulfill the promise and resolve deferals
     */
     function Promise_fulfill(promise, result) {
+        var then;
         if (promise._fulfilled === undefined) {
-            promise._fulfilled = true;
-            promise._result = result;
+            if (!result || result._isPromise) {
+                // it's an object or a promise, use as it is
+                promise._fulfilled = true;
+                promise._result = result;
+            } else {
+                try {
+                    // is this a then-able: has a ['then'] function
+                    // assume that accessing thenable can throw
+                    then = result.then;
+                    promise._fulfilled = true;
+                    if (typeof then !== 'function') {
+                        // not a thenable, just use the result
+                        promise._result = result;
+                    } else {
+                        // convert the thenable to a promise
+                        promise._result = new Promise(then);
+                    }
+                } catch(e) {
+                    promise._fulfilled = false;
+                    promise._result = e;
+                }
+            }
             Promise_resolveDeferred(promise);
         }
     }
