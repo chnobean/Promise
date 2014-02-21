@@ -123,14 +123,15 @@
     function Promise_fulfill(promise, result) {
         var then;
         if (promise._fulfilled === undefined) {
-            if (!result || result._isPromise) {
-                // it's an object or a promise, use as it is
+            if (!result || typeof result !== 'object' || result._isPromise) {
+                // if the result is a primitive type, 
+                // or is a promise, use it as it is
                 promise._fulfilled = true;
                 promise._result = result;
             } else {
                 try {
-                    // is this a then-able: has a ['then'] function
-                    // assume that accessing thenable can throw
+                    // is this a then-able (has a ['then'] function), convert it to a Promise
+                    // handle "then" accessor throwing
                     then = result.then;
                     promise._fulfilled = true;
                     if (typeof then !== 'function') {
