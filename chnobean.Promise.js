@@ -42,11 +42,16 @@
     * @param {function(function, function)} resolver
     */
     function Promise(resolver) {
+        var promise = this;
         if (resolver) {
             try {
                 resolver(
-                    Promise_fulfill.bind(undefined, this), 
-                    Promise_reject.bind(undefined, this)
+                    function fulfill(result) {
+                        Promise_fulfill(promise, result);
+                    },
+                    function reject(result) {
+                        Promise_reject(promise, result);
+                    }
                 );
             } catch(e) {
                 Promise_reject(this, e);
@@ -120,7 +125,7 @@
     /**
     * Fulfill the promise and resolve deferals
     */
-    function Promise_fulfill(promise, result) {
+    function Promise_fulfill(promise, result, allowSynchResolution) {
         var then;
         if (promise._fulfilled === undefined) {
             if (!result || typeof result === 'number' || typeof result === 'boolean' || result._isPromise) {
@@ -148,18 +153,18 @@
                     promise._result = e;
                 }
             }
-            Promise_resolveDeferred(promise);
+            Promise_resolveDeferred(promise, allowSynchResolution);
         }
     }
 
     /**
     * Reject the promise and resolve deferals
     */
-    function Promise_reject(promise, result) {
+    function Promise_reject(promise, result, allowSynchResolution) {
         if (promise._fulfilled === undefined) {
             promise._fulfilled = false;
             promise._result = result;
-            Promise_resolveDeferred(promise);
+            Promise_resolveDeferred(promise, allowSynchResolution);
         }
     }
 
@@ -180,7 +185,7 @@
     /**
     * Resolves deffered promises
     */
-    function Promise_resolveDeferred(promise) {
+    function Promise_resolveDeferred(promise, allowSynchResolution) {
         // assert(promise._fulfilled !== undefined)
         var deferred = promise._deferred,
             deferredLength,
@@ -189,7 +194,7 @@
             promise._deferred = undefined;
             deferredLength = deferred.length;
             for(i = 0; i < deferredLength; i++) {
-                Promise_resolve(deferred[i], promise);
+                Promise_resolve(deferred[i], promise, allowSynchResolution);
             }
         }
     }  
@@ -197,7 +202,7 @@
     /**
     * Resolves promise (called by the one before, when it's resolved)
     */
-    function Promise_resolve(promise, resolvedBy) {
+    function Promise_resolve(promise, resolvedBy, allowSynchResolution) {
         // assert(resolvedBy._fulfilled !== undefined)
         var fulfilled = resolvedBy._fulfilled,
             result = resolvedBy._result,
@@ -219,12 +224,21 @@
             promise._onRejected = undefined;
             // if there is a handler, dispatch... otherwise just settle in-line
             if (handler) {
-                setTimeout(Promise_handleResolution.bind(undefined, promise, handler, result), 0);
+                if (allowSynchResolution) {
+                    // this flag indicates that this stack originated from the setTimeout
+                    // no need to set another Timeout, and just run in same stack
+                    Promise_handleResolution(promise, handler, result);
+                } else {
+                    // stack starts from user code, setTimeout so we start a new stack with only our code
+                    // Spec quote: onFulfilled or onRejected must not be called until the 
+                    //             execution context stack contains only platform code.
+                    setTimeout(Promise_handleResolution.bind(undefined, promise, handler, result), 0);
+                }
             } else {
                 if (fulfilled) {
-                    Promise_fulfill(promise, result);
+                    Promise_fulfill(promise, result, allowSynchResolution);
                 } else {
-                    Promise_reject(promise, result);
+                    Promise_reject(promise, result, allowSynchResolution);
                 }
             }
         }
@@ -239,9 +253,9 @@
             if (newResult === promise) {
                 throw new TypeError();
             }
-            Promise_fulfill(promise, newResult);
+            Promise_fulfill(promise, newResult, true);
         } catch(e) {
-            Promise_reject(promise, e);
+            Promise_reject(promise, e, true);
         }
     }
 
