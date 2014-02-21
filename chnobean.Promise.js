@@ -123,7 +123,7 @@
     function Promise_fulfill(promise, result) {
         var then;
         if (promise._fulfilled === undefined) {
-            if (!result || typeof result !== 'object' || result._isPromise) {
+            if (!result || typeof result === 'number' || typeof result === 'boolean' || result._isPromise) {
                 // if the result is a primitive type, 
                 // or is a promise, use it as it is
                 promise._fulfilled = true;
@@ -139,7 +139,9 @@
                         promise._result = result;
                     } else {
                         // convert the thenable to a promise
-                        promise._result = new Promise(then);
+                        promise._result = new Promise(function (resolve, reject) {
+                            then.call(result, resolve, reject);
+                        });
                     }
                 } catch(e) {
                     promise._fulfilled = false;
