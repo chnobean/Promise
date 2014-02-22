@@ -34,7 +34,7 @@
         (global.chnobean = global.chnobean || {}).Promise = exporter();
     }
 
-})(this, function (undefined) {
+})(this, function () {
     "use strict";
 
     /**
@@ -81,7 +81,7 @@
     * Sugar for promise.then(undefined, onRejected)
     */
     Promise.prototype.catch = function Promise_catch(onRejected) {
-        return this.then(undefined, onRejected);
+        return this.then(void 0, onRejected);
     };
 
     /**
@@ -127,7 +127,8 @@
     */
     function Promise_fulfill(promise, result, allowSynchResolution) {
         var then;
-        if (promise._fulfilled === undefined) {
+        if (promise._fulfilled === void 0) {
+
             if (!result || typeof result === 'number' || typeof result === 'boolean' || result._isPromise) {
                 // if the result is a primitive type, 
                 // or is a promise, use it as it is
@@ -153,7 +154,9 @@
                     promise._result = e;
                 }
             }
+
             Promise_resolveDeferred(promise, allowSynchResolution);
+
         }
     }
 
@@ -161,7 +164,7 @@
     * Reject the promise and resolve deferals
     */
     function Promise_reject(promise, result, allowSynchResolution) {
-        if (promise._fulfilled === undefined) {
+        if (promise._fulfilled === void 0) {
             promise._fulfilled = false;
             promise._result = result;
             Promise_resolveDeferred(promise, allowSynchResolution);
@@ -172,12 +175,14 @@
     * Once promise is resolved, resolve nextPromise
     */
     function Promise_when(promise, nextPromise) {
-        if (promise._fulfilled !== undefined) {
+        if (promise._fulfilled !== void 0) {
             // we are resolved, resolve the given promise
             Promise_resolve(nextPromise, promise);
         } else {
             // defer the resolution
-            promise._deferred = promise._deferred || [];
+            if (!promise._deferred) {
+                promise._deferred = [];
+            }
             promise._deferred.push(nextPromise);
         }
     }
@@ -191,7 +196,7 @@
             deferredLength,
             i;
         if (deferred) {
-            promise._deferred = undefined;
+            promise._deferred = void 0;
             deferredLength = deferred.length;
             for(i = 0; i < deferredLength; i++) {
                 Promise_resolve(deferred[i], promise, allowSynchResolution);
@@ -232,7 +237,7 @@
                     // stack starts from user code, setTimeout so we start a new stack with only our code
                     // Spec quote: onFulfilled or onRejected must not be called until the 
                     //             execution context stack contains only platform code.
-                    setTimeout(Promise_handleResolution.bind(undefined, promise, handler, result), 0);
+                    setTimeout(Promise_handleResolution.bind(void 0, promise, handler, result), 0);
                 }
             } else {
                 if (fulfilled) {
