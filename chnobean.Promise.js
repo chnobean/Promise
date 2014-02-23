@@ -45,7 +45,7 @@
 
     /**
     * @constructor
-    * @param {function(function(), function())} resolver
+    * @param {function(function(*=), function(*=))} resolver
     */
     function Promise(resolver) {
         var promise = this;
@@ -66,8 +66,8 @@
     }
 
     /**
-    * @param {function()=} onFulfilled is executed when this promise is fulfilled
-    * @param {function()=} onRejected is executed when this promise is rejected
+    * @param {function(*=)=} onFulfilled is executed when this promise is fulfilled
+    * @param {function(*=)=} onRejected is executed when this promise is rejected
     */
     Promise.prototype.then = function Promise_then(onFulfilled, onRejected) {
         var promise = Promise_create();
@@ -129,6 +129,7 @@
     }
 
     /**
+    * @param {boolean=} allowSynchResolution
     * Fulfill the promise and resolve deferals
     */
     function Promise_fulfill(promise, result, allowSynchResolution) {
@@ -144,6 +145,7 @@
     }
 
     /**
+    * @param {boolean=} allowSynchResolution
     * Reject the promise and resolve deferals
     */
     function Promise_reject(promise, result, allowSynchResolution) {
@@ -205,6 +207,7 @@
     }
 
     /**
+    * @param {boolean=} allowSynchResolution
     * Resolves deffered promises
     */
     function Promise_resolveDeferred(promise, allowSynchResolution) {
@@ -222,6 +225,7 @@
     }  
 
     /**
+    * @param {boolean=} allowSynchResolution
     * Resolves promise (called by the one before, when it's resolved)
     */
     function Promise_resolve(promise, resolvedBy, allowSynchResolution) {
