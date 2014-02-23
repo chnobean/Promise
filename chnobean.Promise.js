@@ -253,7 +253,7 @@
     function Promise_when(promise, nextPromise) {
         if (promise._fulfilled !== void 0) {
             // we are resolved, resolve the given promise
-            Promise_resolve(nextPromise, promise);
+            Promise_resolve(nextPromise, promise._fulfilled, promise._result);
         } else {
             // defer the resolution
             if (!promise._deferred) {
@@ -276,7 +276,7 @@
             promise._deferred = void 0;
             deferredLength = deferred.length;
             for(i = 0; i < deferredLength; i++) {
-                Promise_resolve(deferred[i], promise, allowSynchResolution);
+                Promise_resolve(deferred[i], promise._fulfilled, promise._result, allowSynchResolution);
             }
         }
     }  
@@ -285,11 +285,9 @@
     * @param {boolean=} allowSynchResolution
     * Resolves promise (called by the one before, when it's resolved)
     */
-    function Promise_resolve(promise, resolvedBy, allowSynchResolution) {
-        // assert(resolvedBy._fulfilled !== undefined)
-        var fulfilled = resolvedBy._fulfilled,
-            result = resolvedBy._result,
-            handler;
+    function Promise_resolve(promise, fulfilled, result, allowSynchResolution) {
+        // assert(fulfilled !== undefined)
+        var handler;
 
         if (fulfilled && result && result._isPromise) {
             // previous promise resolved to a promise, forward the promose
