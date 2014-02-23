@@ -112,6 +112,48 @@
         return promise;
     };
 
+    /**
+    * @param {Array.<*>} promises
+    *
+    * Given array of promises or results, resolves to array of results. 
+    * Or rejects if any of the promises reject.
+    */
+    Promise.all = function Promise_all(promises) {
+        var promise = Promise_create(),
+            length = promises.length,
+            results = [],
+            remaining = 0,
+            result,
+            i;
+
+        function onRejected(result) {
+            Promise_reject(promise, result, true);
+        }
+
+        for(i = 0; i < length; i++) {
+            result = promises[i];
+            if (result && result._isPromise) {
+                // it's a promise
+                remaining++;
+                (function(i) {
+                    result.then(
+                        function onFulfilled(result) {
+                            results[i] = result;
+                            if (!(--remaining)) {
+                                Promise_fulfill(promise, results, true);    
+                            }
+                        },
+                        onRejected
+                    );
+                })(i);                
+            } else {
+                results[i] = result;
+            }
+        }
+
+        return promise;
+    };
+
     // --------------------------------------------------------------------------------
     // -- private implementation
     // --------------------------------------------------------------------------------
