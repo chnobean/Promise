@@ -44,6 +44,13 @@
     var CONVERT_THENABLES = true;
 
     /**
+    * @const
+    * Spec sais we should dispatch the calls to func(onResolved, onRejected) until after client code is done.
+    * We can gain perf by not having to setTimeout.
+    */
+    var ALWAYS_RESOLVE_SYNCHRONIOUSLY = false;
+
+    /**
     * @constructor
     * @param {function(function(*=), function(*=))} resolver
     */
@@ -122,33 +129,42 @@
         var promise = Promise_create(),
             length = promises.length,
             results = [],
-            remaining = 0,
+            // start +1, so we handle even the non-spec complient promise implementations
+            // where promise can all then(onResolved) in same call stack
+            remaining = 1, 
             result,
             i;
+
+        function onFulfilled(index, result) {
+            results[index] = result;
+            if (!(--remaining)) {
+                Promise_fulfill(promise, results, true);    
+            }
+        }
 
         function onRejected(result) {
             Promise_reject(promise, result, true);
         }
 
+        // TODO: handle CONVERT_THENABLES
         for(i = 0; i < length; i++) {
             result = promises[i];
             if (result && result._isPromise) {
                 // it's a promise
                 remaining++;
-                (function(i) {
-                    result.then(
-                        function onFulfilled(result) {
-                            results[i] = result;
-                            if (!(--remaining)) {
-                                Promise_fulfill(promise, results, true);    
-                            }
-                        },
-                        onRejected
-                    );
-                })(i);                
+                result.then(
+                    onFulfilled.bind(void 0, i),
+                    onRejected
+                );
             } else {
                 results[i] = result;
             }
+        }
+
+        if (!(--remaining)) {
+            // all were resolved before we even got here
+            promise._fulfilled = true;
+            promise._result = results;
         }
 
         return promise;
@@ -292,7 +308,7 @@
             promise._onRejected = undefined;
             // if there is a handler, dispatch... otherwise just settle in-line
             if (handler) {
-                if (allowSynchResolution) {
+                if (allowSynchResolution || ALWAYS_RESOLVE_SYNCHRONIOUSLY) {
                     // this flag indicates that this stack originated from the setTimeout
                     // no need to set another Timeout, and just run in same stack
                     Promise_handleResolution(promise, handler, result);
