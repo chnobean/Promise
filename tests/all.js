@@ -357,6 +357,137 @@
 
             });
 
+            it("Promise.all([resolve, resolve, result]).then.catch.then", function () {
+                var result1,
+                    result2,
+                    error1,
+                    error2,
+                    done;
+
+                runs(function () {
+                    Promise.all([
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                resolve('r1');
+                            });
+                        }),
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                resolve('r2');
+                            });
+                        }),
+                        'r3',
+                    ])
+                    .then(function(r) {
+                        result1 = r;
+                    })
+                    .catch(function(){
+                        error1 = true;
+                    })
+                    .then(function() {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toEqual(['r1', 'r2', 'r3']);
+                    expect(error1).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
+
+            it("Promise.all([result, result, result]).then.catch.then", function () {
+                var result1,
+                    result2,
+                    error1,
+                    error2,
+                    done;
+
+                runs(function () {
+                    Promise.all([
+                        'r1',
+                        'r2',
+                        'r3',
+                    ])
+                    .then(function(r) {
+                        result1 = r;
+                    })
+                    .catch(function(){
+                        error1 = true;
+                    })
+                    .then(function() {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toEqual(['r1', 'r2', 'r3']);
+                    expect(error1).toBeUndefined();
+                    expect(done).toBe(true);
+                });
+
+            });
+
+            it("Promise.all([result, resolve, reject, resolve, result]).then.catch.then", function () {
+                var result1,
+                    result2,
+                    error1 = '',
+                    error2,
+                    done;
+
+                runs(function () {
+                    Promise.all([
+                        'r1',
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                resolve('r2');
+                            });
+                        }),
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                reject('e');
+                            });
+                        }),
+                        new Promise(function (resolve, reject) {
+                            execute(function(){
+                                resolve('r3');
+                            });
+                        }),
+                        'r3',
+                    ])
+                    .then(function(r) {
+                        result1 = r;
+                    })
+                    .catch(function(r){
+                        error1+=r;
+                    })
+                    .then(function() {
+                        done = true;
+                    });
+                });
+
+                waitsFor(function(){
+                    return done;
+                });
+
+                runs(function () {
+                    expect(result1).toBeUndefined();
+                    expect(error1).toBe('e');
+                    expect(done).toBe(true);
+                });
+
+            });
+
 
         };
 

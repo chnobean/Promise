@@ -129,8 +129,7 @@
         var promise = Promise_create(),
             length = promises.length,
             results = [],
-            // start +1, so we handle even the non-spec complient promise implementations
-            // where promise can all then(onResolved) in same call stack
+            // start +1, so we handle when there are no promises
             remaining = 1, 
             result,
             i;
