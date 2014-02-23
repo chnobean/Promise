@@ -38,8 +38,14 @@
     "use strict";
 
     /**
+    * @const
+    * Should thenables be detected and converter automatically. This does impacts performance.
+    */
+    var CONVERT_THENABLES = true;
+
+    /**
     * @constructor
-    * @param {function(function, function)} resolver
+    * @param {function(function(), function())} resolver
     */
     function Promise(resolver) {
         var promise = this;
@@ -60,8 +66,8 @@
     }
 
     /**
-    * @param {function=} onFulfilled is executed when this promise is fulfilled
-    * @param {function=} onRejected is executed when this promise is rejected
+    * @param {function()=} onFulfilled is executed when this promise is fulfilled
+    * @param {function()=} onRejected is executed when this promise is rejected
     */
     Promise.prototype.then = function Promise_then(onFulfilled, onRejected) {
         var promise = Promise_create();
@@ -76,7 +82,7 @@
     };
 
     /**
-    * @param {function} onRejected
+    * @param {function()} onRejected
     *
     * Sugar for promise.then(undefined, onRejected)
     */
@@ -126,37 +132,14 @@
     * Fulfill the promise and resolve deferals
     */
     function Promise_fulfill(promise, result, allowSynchResolution) {
-        var then;
         if (promise._fulfilled === void 0) {
-
-            if (!result || typeof result === 'number' || typeof result === 'boolean' || result._isPromise) {
-                // if the result is a primitive type, 
-                // or is a promise, use it as it is
+            if (CONVERT_THENABLES) {
+                Promise_fulfillThenable(promise, result);
+            } else {
                 promise._fulfilled = true;
                 promise._result = result;
-            } else {
-                try {
-                    // is this a then-able (has a ['then'] function), convert it to a Promise
-                    // handle "then" accessor throwing
-                    then = result.then;
-                    promise._fulfilled = true;
-                    if (typeof then !== 'function') {
-                        // not a thenable, just use the result
-                        promise._result = result;
-                    } else {
-                        // convert the thenable to a promise
-                        promise._result = new Promise(function (resolve, reject) {
-                            then.call(result, resolve, reject);
-                        });
-                    }
-                } catch(e) {
-                    promise._fulfilled = false;
-                    promise._result = e;
-                }
             }
-
             Promise_resolveDeferred(promise, allowSynchResolution);
-
         }
     }
 
@@ -168,6 +151,40 @@
             promise._fulfilled = false;
             promise._result = result;
             Promise_resolveDeferred(promise, allowSynchResolution);
+        }
+    }
+
+    /**
+    * Fulfill the promise, but check for result to be a thenable:
+    *   Thenable is an object that has obj.then(function resolve(){}, function reject(){}), 
+    *   including other Promise implementations
+    */
+    function Promise_fulfillThenable(promise, result) {
+        var then;
+        if (!result || typeof result === 'number' || typeof result === 'boolean' || result._isPromise) {
+            // if the result is a primitive type, 
+            // or is a promise, use it as it is
+            promise._fulfilled = true;
+            promise._result = result;
+        } else {
+            try {
+                // is this a then-able (has a ['then'] function), convert it to a Promise
+                // handle "then" accessor throwing
+                then = result.then;
+                promise._fulfilled = true;
+                if (typeof then !== 'function') {
+                    // not a thenable, just use the result
+                    promise._result = result;
+                } else {
+                    // convert the thenable to a promise
+                    promise._result = new Promise(function (resolve, reject) {
+                        then.call(result, resolve, reject);
+                    });
+                }
+            } catch(e) {
+                promise._fulfilled = false;
+                promise._result = e;
+            }
         }
     }
 
