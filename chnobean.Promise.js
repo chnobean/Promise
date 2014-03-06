@@ -51,6 +51,11 @@
     var ALWAYS_RESOLVE_SYNCHRONIOUSLY = false;
 
     /**
+    * Guard against variable named "undefined" being declared in global context.
+    */
+    var undefined;
+
+    /**
     * @constructor
     * @param {function(function(*=), function(*=))} resolver
     */
@@ -94,7 +99,7 @@
     * Sugar for promise.then(undefined, onRejected)
     */
     Promise.prototype.catch = function Promise_catch(onRejected) {
-        return this.then(void 0, onRejected);
+        return this.then(undefined, onRejected);
     };
 
     /**
@@ -152,7 +157,7 @@
                 // it's a promise
                 remaining++;
                 result.then(
-                    onFulfilled.bind(void 0, i),
+                    onFulfilled.bind(undefined, i),
                     onRejected
                 );
             } else {
@@ -190,7 +195,7 @@
     * Fulfill the promise and resolve deferals
     */
     function Promise_fulfill(promise, result, allowSynchResolution) {
-        if (promise._fulfilled === void 0) {
+        if (promise._fulfilled === undefined) {
             if (CONVERT_THENABLES) {
                 Promise_fulfillThenable(promise, result);
             } else {
@@ -206,7 +211,7 @@
     * Reject the promise and resolve deferals
     */
     function Promise_reject(promise, result, allowSynchResolution) {
-        if (promise._fulfilled === void 0) {
+        if (promise._fulfilled === undefined) {
             promise._fulfilled = false;
             promise._result = result;
             Promise_resolveDeferred(promise, allowSynchResolution);
@@ -251,7 +256,7 @@
     * Once promise is resolved, resolve nextPromise
     */
     function Promise_when(promise, nextPromise) {
-        if (promise._fulfilled !== void 0) {
+        if (promise._fulfilled !== undefined) {
             // we are resolved, resolve the given promise
             Promise_resolve(nextPromise, promise._fulfilled, promise._result);
         } else {
@@ -273,7 +278,7 @@
             deferredLength,
             i;
         if (deferred) {
-            promise._deferred = void 0;
+            promise._deferred = undefined;
             deferredLength = deferred.length;
             for(i = 0; i < deferredLength; i++) {
                 Promise_resolve(deferred[i], promise._fulfilled, promise._result, allowSynchResolution);
@@ -313,7 +318,7 @@
                     // stack starts from user code, setTimeout so we start a new stack with only our code
                     // Spec quote: onFulfilled or onRejected must not be called until the 
                     //             execution context stack contains only platform code.
-                    setTimeout(Promise_handleResolution.bind(void 0, promise, handler, result), 0);
+                    setTimeout(Promise_handleResolution.bind(undefined, promise, handler, result), 0);
                 }
             } else {
                 if (fulfilled) {
