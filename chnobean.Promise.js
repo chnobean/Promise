@@ -90,7 +90,7 @@
         if (typeof onRejected === 'function') {
             promise._onRejected = onRejected; 
         }
-        Promise_when(this, promise);
+        Promise_whenResolved(this, promise);
         return promise;
     };
 
@@ -256,7 +256,7 @@
     /**
     * Once promise is resolved, resolve nextPromise
     */
-    function Promise_when(promise, nextPromise) {
+    function Promise_whenResolved(promise, nextPromise) {
         if (promise._fulfilled !== undefined) {
             // we are resolved, resolve the given promise
             Promise_resolve(nextPromise, promise._fulfilled, promise._result);
@@ -297,7 +297,7 @@
 
         if (fulfilled && result && result._isPromise) {
             // previous promise resolved to a promise, forward the promose
-            Promise_when(result, promise);
+            Promise_whenResolved(result, promise);
         } else {
             // resolve promise
             // what handler will we use: onFulfilled or onRejected?
