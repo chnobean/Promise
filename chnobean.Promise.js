@@ -45,7 +45,8 @@
 
     /**
     * @const
-    * Spec sais we should dispatch the calls to func(onResolved, onRejected) until after client code is done.
+    * Spec says we should dispatch the calls to func(onResolved, onRejected), 
+    * so it runs only after client code is done.
     * We can gain perf by not having to setTimeout.
     */
     var ALWAYS_RESOLVE_SYNCHRONIOUSLY = false;
@@ -127,8 +128,8 @@
     /**
     * @param {Array.<*>} promises
     *
-    * Given array of promises or results, resolves to array of results. 
-    * Or rejects if any of the promises reject.
+    * Given array of promises or results, either resolves to array of results,
+    * or rejects if any of the promises reject.
     */
     Promise.all = function Promise_all(promises) {
         var promise = Promise_create(),
@@ -184,7 +185,7 @@
     Promise.prototype._isPromise = true;
 
     /**
-    * Creates a promise without running the contructor function.
+    * Creates a promise without running the constructor function.
     */
     function Promise_create() {
         return Object.create(Promise.prototype);
@@ -192,7 +193,7 @@
 
     /**
     * @param {boolean=} allowSynchResolution
-    * Fulfill the promise and resolve deferals
+    * Fulfill the promise and resolve deferrals
     */
     function Promise_fulfill(promise, result, allowSynchResolution) {
         if (promise._fulfilled === undefined) {
@@ -208,7 +209,7 @@
 
     /**
     * @param {boolean=} allowSynchResolution
-    * Reject the promise and resolve deferals
+    * Reject the promise and resolve deferrals
     */
     function Promise_reject(promise, result, allowSynchResolution) {
         if (promise._fulfilled === undefined) {
@@ -219,9 +220,9 @@
     }
 
     /**
-    * Fulfill the promise, but check for result to be a thenable:
-    *   Thenable is an object that has obj.then(function resolve(){}, function reject(){}), 
-    *   including other Promise implementations
+    * Fulfill the promise, but check for result to be a thenable.
+    * Thenable is an object that has obj.then(function resolve(){}, function reject(){}), 
+    * such as this or any other Promise implementations.
     */
     function Promise_fulfillThenable(promise, result) {
         var then;
